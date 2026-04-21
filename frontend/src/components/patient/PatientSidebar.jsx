@@ -15,6 +15,7 @@ import {
   X,
   Menu,
 } from 'lucide-react'
+import useAuth from '../../hooks/useAuth'
 import { clearToken } from '../../utils/tokenUtils'
 
 const navItems = [
@@ -57,10 +58,11 @@ export default function PatientSidebar({
 }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { logout } = useAuth()
 
   const handleLogout = () => {
+    logout()
     clearToken()
-    localStorage.removeItem('currentUser')
     navigate('/auth/login')
   }
 

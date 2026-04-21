@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { getToken } from '../utils/tokenUtils'
 
-const DOCTOR_PATH = '/api/doctor'
+const DOCTOR_PATH = '/doctor'
 
 const looksLikeUuid = (value) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
@@ -10,7 +10,7 @@ const resolveDoctorBaseUrl = () => {
   const raw = `${import.meta.env.VITE_DOCTOR_SERVICE_URL || ''}`.trim()
 
   if (!raw || looksLikeUuid(raw)) {
-    return 'http://localhost:8083'
+    return '/api'
   }
 
   const normalized = raw.replace(/\/+$/, '')
@@ -23,7 +23,7 @@ const resolveDoctorBaseUrl = () => {
     return normalized
   }
 
-  return 'http://localhost:8083'
+  return '/api'
 }
 
 const doctorApi = axios.create({

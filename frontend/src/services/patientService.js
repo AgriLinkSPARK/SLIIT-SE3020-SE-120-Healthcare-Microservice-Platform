@@ -1,6 +1,6 @@
 import api from './api'
 import axios from 'axios'
-import { PATIENT_SERVICE_URL } from '../utils/constants'
+import { getPatientServiceApiBaseUrl } from '../utils/constants'
 import { getToken } from '../utils/tokenUtils'
 
 // ==================== EXISTING FUNCTIONALITY ====================
@@ -10,13 +10,13 @@ export const getPatientDashboard = async () => {
   return data
 }
 
-// ==================== PATIENT SERVICE (NTBA) ====================
+// ==================== PATIENT SERVICE ====================
 
 // Helper to extract data from ApiResponse wrapper
 const extractData = (response) => response.data?.data || response.data
 
 const patientApi = axios.create({
-  baseURL: `${PATIENT_SERVICE_URL}/api`,
+  baseURL: getPatientServiceApiBaseUrl(),
 })
 
 patientApi.interceptors.request.use((config) => {

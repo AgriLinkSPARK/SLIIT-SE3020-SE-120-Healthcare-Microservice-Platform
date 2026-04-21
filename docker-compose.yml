@@ -26,7 +26,6 @@ services:
       SPRING_MONGODB_URI: mongodb://mongodb:27017/healthcare_payments
       SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/healthcare_payments
       SPRING_MONGODB_DATABASE: healthcare_payments
-      SPRING_MONGODB_URI_ATLAS: mongodb+srv://aenuine_db_user:jPKz61Zhk5qQkWE3@cluster0.pgglpoh.mongodb.net/?appName=Cluster0&serverSelectionTimeoutMS=3000&connectTimeoutMS=3000&socketTimeoutMS=3000
       STRIPE_API_KEY: ${STRIPE_API_KEY}
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
@@ -55,7 +54,6 @@ services:
       SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/healthcare_appointments
       SPRING_MONGODB_DATABASE: healthcare_appointments
       DOCTOR_SERVICE_URL: http://healthcare-doctor-service:8083
-      SPRING_MONGODB_URI_ATLAS: mongodb+srv://aenuine_db_user:1UGbqsYcQDXx1doi@cluster0.x7dnyc7.mongodb.net/?appName=Cluster0
     ports:
       - "8002:8002"
     healthcheck:
@@ -75,9 +73,9 @@ services:
         condition: service_healthy
     environment:
       SERVER_PORT: 8081
-      MONGODB_URI: mongodb+srv://chamithu_db_user:wVyYgnFqzCAK6WZO@cluster0.pygjnpf.mongodb.net/auth_service?appName=Cluster0
-      SPRING_DATA_MONGODB_URI: mongodb+srv://chamithu_db_user:wVyYgnFqzCAK6WZO@cluster0.pygjnpf.mongodb.net/auth_service?appName=Cluster0
-      SPRING_MONGODB_URI: mongodb+srv://chamithu_db_user:wVyYgnFqzCAK6WZO@cluster0.pygjnpf.mongodb.net/auth_service?appName=Cluster0
+      MONGODB_URI: mongodb://mongodb:27017/auth_service
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/auth_service
+      SPRING_MONGODB_URI: mongodb://mongodb:27017/auth_service
       JWT_SECRET: replace-with-a-strong-prod-secret
       JWT_EXPIRATION_MINUTES: 120
       AUTH_SEED_ADMIN_ENABLED: "true"
@@ -101,7 +99,6 @@ services:
       MONGODB_URI: mongodb://mongodb:27017/healthcare_doctor
       SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/healthcare_doctor
       SPRING_MONGODB_URI: mongodb://mongodb:27017/healthcare_doctor
-      MONGODB_URI_ATLAS: mongodb+srv://chamithued_db_user:65SBkoG0ZUmw2fKG@cluster0.m8gi3fh.mongodb.net/healthcare_doctor?appName=Cluster0
       JWT_SECRET: replace-with-a-strong-prod-secret
     ports:
       - "8083:8083"
@@ -119,9 +116,9 @@ services:
       - "8082:8082"
     environment:
       SERVER_PORT: 8082
-      MONGODB_URI: mongodb+srv://ishiniayodya610_db_user:Ishini716@cluster0.czh0jfq.mongodb.net/healthcare_patient?appName=Cluster0
-      SPRING_DATA_MONGODB_URI: mongodb+srv://ishiniayodya610_db_user:Ishini716@cluster0.czh0jfq.mongodb.net/healthcare_patient?appName=Cluster0
-      SPRING_MONGODB_URI: mongodb+srv://ishiniayodya610_db_user:Ishini716@cluster0.czh0jfq.mongodb.net/healthcare_patient?appName=Cluster0
+      MONGODB_URI: mongodb://mongodb:27017/healthcare_patient
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/healthcare_patient
+      SPRING_MONGODB_URI: mongodb://mongodb:27017/healthcare_patient
       SPRING_MONGODB_DATABASE: healthcare_patient
       JWT_SECRET: replace-with-a-strong-prod-secret
       FILE_STORAGE_PATH: /app/uploads/medical-reports
@@ -133,12 +130,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_GATEWAY_URL: ${VITE_API_GATEWAY_URL:-http://localhost:8081/api}
-        VITE_DOCTOR_SERVICE_URL: ${VITE_DOCTOR_SERVICE_URL:-http://localhost:8083}
+        VITE_API_GATEWAY_URL: ${VITE_API_GATEWAY_URL:-/api}
+        VITE_DOCTOR_SERVICE_URL: ${VITE_DOCTOR_SERVICE_URL:-/api}
         VITE_PAYMENT_SERVICE_URL: ${VITE_PAYMENT_SERVICE_URL:-http://localhost:8004}
-        VITE_APPOINTMENT_SERVICE_URL: ${VITE_APPOINTMENT_SERVICE_URL:-http://localhost:8002/api/v1/appointments}
+        VITE_APPOINTMENT_SERVICE_URL: ${VITE_APPOINTMENT_SERVICE_URL:-/api/v1/appointments}
         VITE_TELEMEDICINE_SERVICE_URL: ${VITE_TELEMEDICINE_SERVICE_URL:-/api/telemedicine/sessions}
-        VITE_PATIENT_SERVICE_URL: ${VITE_PATIENT_SERVICE_URL:-http://localhost:8082}
+        VITE_PATIENT_SERVICE_URL: ${VITE_PATIENT_SERVICE_URL:-/api}
         VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY}
     container_name: healthcare-frontend
     depends_on:

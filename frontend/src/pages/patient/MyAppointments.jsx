@@ -6,10 +6,20 @@ import { getVideoSessionByAppointmentId } from '../../services/telemedicineServi
 
 const resolvePatientId = (user) => {
   const candidates = [
-    user?.userId,
     user?.patientId,
-    user?.user?.userId,
+    user?.userId,
+    user?.id,
+    user?._id,
+    user?.data?.patientId,
+    user?.data?.userId,
+    user?.data?.id,
+    user?.data?._id,
     user?.user?.patientId,
+    user?.user?.userId,
+    user?.user?.id,
+    user?.user?._id,
+    localStorage.getItem('patientId'),
+    localStorage.getItem('userId'),
   ]
 
   const value = candidates.find((item) => typeof item === 'string' && item.trim())

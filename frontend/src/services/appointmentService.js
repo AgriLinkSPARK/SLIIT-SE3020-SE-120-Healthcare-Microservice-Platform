@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const appointmentApi = axios.create({
-  baseURL: import.meta.env.VITE_APPOINTMENT_SERVICE_URL || 'http://localhost:8002/api/v1/appointments',
+  baseURL: import.meta.env.VITE_APPOINTMENT_SERVICE_URL || '/api/v1/appointments',
   timeout: 15000,
 })
 
