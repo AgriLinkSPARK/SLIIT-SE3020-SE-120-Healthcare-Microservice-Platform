@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ArogyaBlock | Auth Client</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Plus Jakarta Sans", "sans-serif"],
+            },
+            colors: {
+              brand: {
+                50: "#edf7ff",
+                100: "#d8ecff",
+                500: "#1f86ff",
+                700: "#0f4f99",
+                900: "#0a2d57",
+              },
+            },
+            boxShadow: {
+              soft: "0 10px 35px -18px rgba(14, 72, 133, 0.45)",
+            },
+            keyframes: {
+              rise: {
+                "0%": { opacity: "0", transform: "translateY(16px)" },
+                "100%": { opacity: "1", transform: "translateY(0)" },
+              },
+            },
+            animation: {
+              rise: "rise 500ms ease-out both",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .hero-bg {
+        background-image: linear-gradient(
+            80deg,
+            rgba(236, 244, 255, 0.95) 35%,
+            rgba(236, 244, 255, 0.68) 55%,
+            rgba(236, 244, 255, 0.22) 100%
+          );
+        background-size: cover;
+        background-position: center;
+      }
+
+      .panel-backdrop {
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-slate-100 text-slate-900">
+    <div class="mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+      <header class="flex items-center justify-between rounded-t-2xl border border-white/60 bg-white/85 px-5 py-4 shadow-soft panel-backdrop sm:px-8">
+        <h1 class="text-xl font-extrabold tracking-tight text-brand-900 sm:text-2xl">ArogyaBlock</h1>
+        <nav class="flex items-center gap-2">
+          <button
+            id="open-login"
+            class="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+          >
+            Login
+          </button>
+          <button
+            id="open-register"
+            class="rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+          >
+            Register
+          </button>
+        </nav>
+      </header>
+
+      <main class="hero-bg relative flex flex-1 overflow-hidden rounded-b-2xl border border-t-0 border-white/60 shadow-soft">
+        <div class="absolute inset-0 bg-gradient-to-r from-white/55 to-transparent"></div>
+
+        <section class="relative z-10 flex w-full flex-col justify-center p-6 sm:p-10 lg:w-3/5 lg:p-14">
+          <div class="max-w-xl animate-rise space-y-4">
+            <p class="inline-flex items-center rounded-full border border-brand-100 bg-white/75 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">
+              Secure Healthcare Platform
+            </p>
+            <h2 class="text-4xl font-extrabold leading-tight tracking-tight text-brand-900 sm:text-5xl">
+              Welcome to ArogyaBlock
+            </h2>
+            <p class="max-w-md text-base leading-relaxed text-slate-700 sm:text-lg">
+              Login or create an account to access doctor and patient services using your secure JWT session.
+            </p>
+            <div class="flex items-center gap-3 pt-2">
+              <button
+                id="cta-login"
+                class="rounded-full bg-brand-500 px-6 py-2.5 text-sm font-bold text-white shadow-soft transition hover:bg-brand-700"
+              >
+                Login
+              </button>
+              <button
+                id="cta-register"
+                class="rounded-full border border-brand-500 bg-white/85 px-6 py-2.5 text-sm font-bold text-brand-700 transition hover:bg-brand-50"
+              >
+                Create Account
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="relative z-10 hidden w-2/5 items-end justify-center p-8 lg:flex">
+          <div class="w-full max-w-md rounded-3xl border border-white/65 bg-white/55 p-5 panel-backdrop">
+            <p class="text-sm font-semibold text-slate-700">Asynchronous Web Client</p>
+            <p class="mt-2 text-sm text-slate-600">
+              Uses JavaScript fetch API with async/await for non-blocking authentication requests.
+            </p>
+          </div>
+        </aside>
+
+        <section class="pointer-events-none absolute inset-0 z-20 flex items-center justify-center p-4 sm:p-6">
+          <div id="auth-panel" class="pointer-events-auto w-full max-w-md rounded-2xl border border-white/65 bg-white/92 p-6 shadow-soft panel-backdrop sm:p-7">
+            <div class="mb-5 flex items-center justify-between">
+              <h3 id="form-title" class="text-xl font-extrabold text-brand-900">Login</h3>
+              <button id="close-panel" class="rounded-full p-2 text-slate-500 hover:bg-slate-100" aria-label="Close panel">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <p id="status-msg" class="mb-4 hidden rounded-lg px-3 py-2 text-sm font-medium"></p>
+
+            <form id="login-form" class="space-y-4">
+              <label class="block space-y-1">
+                <span class="text-sm font-semibold text-slate-700">Email</span>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                  placeholder="doctor@example.com"
+                />
+              </label>
+              <label class="block space-y-1">
+                <span class="text-sm font-semibold text-slate-700">Password</span>
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                  placeholder="********"
+                />
+              </label>
+              <button
+                type="submit"
+                class="w-full rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-brand-700"
+              >
+                Sign In
+              </button>
+            </form>
+
+            <form id="register-form" class="hidden space-y-4">
+              <label class="block space-y-1">
+                <span class="text-sm font-semibold text-slate-700">Full Name</span>
+                <input
+                  type="text"
+                  name="fullName"
+                  required
+                  class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                  placeholder="Dr. Jane Doe"
+                />
+              </label>
+              <label class="block space-y-1">
+                <span class="text-sm font-semibold text-slate-700">Email</span>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                  placeholder="jane@example.com"
+                />
+              </label>
+              <label class="block space-y-1">
+                <span class="text-sm font-semibold text-slate-700">Password</span>
+                <input
+                  type="password"
+                  name="password"
+                  minlength="6"
+                  required
+                  class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                  placeholder="Minimum 6 characters"
+                />
+              </label>
+              <label class="block space-y-1">
+                <span class="text-sm font-semibold text-slate-700">Role</span>
+                <select
+                  name="role"
+                  class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                >
+                  <option value="PATIENT">Patient</option>
+                  <option value="DOCTOR">Doctor</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </label>
+              <button
+                type="submit"
+                class="w-full rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-brand-700"
+              >
+                Create Account
+              </button>
+            </form>
+
+            <p class="mt-4 text-center text-xs text-slate-500">
+              API Base: <span id="api-base-label" class="font-semibold text-slate-700"></span>
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

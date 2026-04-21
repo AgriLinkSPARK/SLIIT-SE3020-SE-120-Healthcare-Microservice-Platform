@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: doctor-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://mongodb:27017/healthcare_doctor}
+
+server:
+  port: ${SERVER_PORT:8083}
+
+jwt:
+  issuer: healthcare-platform
+  secret: ${JWT_SECRET:replace-with-a-strong-secret-key-for-dev-only}

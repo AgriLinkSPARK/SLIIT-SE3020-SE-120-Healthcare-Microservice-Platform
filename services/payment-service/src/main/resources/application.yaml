@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: payment-service
+  security:
+    user:
+      name: ${SPRING_SECURITY_USER_NAME:admin}
+      password: ${SPRING_SECURITY_USER_PASSWORD:admin123}
+  data:
+    mongodb:
+      uri: ${SPRING_MONGODB_URI:mongodb://mongodb:27017/healthcare_payments}
+      database: ${SPRING_MONGODB_DATABASE:healthcare_payments}
+      auto-index-creation: true
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+  task:
+    execution:
+      pool:
+        core-size: 5
+        max-size: 10
+        queue-capacity: 500
+
+server:
+  port: 8004
+
+stripe:
+  api:
+    key: ${STRIPE_API_KEY:sk_test_dummy_payment_service_key}
+  webhook:
+    secret: ${STRIPE_WEBHOOK_SECRET:whsec_dummy_payment_service_secret}
+  publishable-key: ${STRIPE_PUBLISHABLE_KEY:pk_test_dummy_payment_service_key}
+
+payment:
+  default-currency: USD
+  supported-currencies:
+    - USD
+    - LKR
+    - EUR
+    - GBP
+  success-redirect-url: ${PAYMENT_SUCCESS_URL:http://localhost:3000/payment/success}
+  failure-redirect-url: ${PAYMENT_FAILURE_URL:http://localhost:3000/payment/failure}
+  gateways:
+    payhere:
+      checkout-url: ${PAYHERE_CHECKOUT_URL:https://sandbox.payhere.lk/pay/checkout}
+      merchant-id: ${PAYHERE_MERCHANT_ID:}
+      return-url: ${PAYHERE_RETURN_URL:http://localhost:8004/api/v1/webhooks/payhere/return}
+      cancel-url: ${PAYHERE_CANCEL_URL:http://localhost:8004/api/v1/webhooks/payhere/cancel}
+      notify-url: ${PAYHERE_NOTIFY_URL:http://localhost:8004/api/v1/webhooks/payhere/notify}
+    dialog-genie:
+      checkout-url: ${DIALOG_GENIE_CHECKOUT_URL:https://sandbox.dialoggenie.lk/checkout}
+      merchant-id: ${DIALOG_GENIE_MERCHANT_ID:}
+      secret: ${DIALOG_GENIE_SECRET:}
+    frimi:
+      checkout-url: ${FRIMI_CHECKOUT_URL:https://sandbox.frimi.lk/checkout}
+      merchant-code: ${FRIMI_MERCHANT_CODE:}
+
+paypal:
+  sandbox:
+    checkout-url: ${PAYPAL_SANDBOX_CHECKOUT_URL:https://www.sandbox.paypal.com/checkoutnow}
+
+logging:
+  level:
+    root: INFO
+    com.sliit.healthcare: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"

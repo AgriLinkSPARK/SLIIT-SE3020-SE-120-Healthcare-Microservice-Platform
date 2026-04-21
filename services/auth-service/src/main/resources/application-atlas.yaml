@@ -1,0 +1,4 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb+srv://chamithu_db_user:E1TWkMiGkzdnnuzI@cluster0.pygjnpf.mongodb.net/healthcare_auth?appName=Cluster0&authSource=admin

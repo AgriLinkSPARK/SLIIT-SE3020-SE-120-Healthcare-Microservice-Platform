@@ -1,0 +1,433 @@
+{
+  "info": {
+    "name": "Telemedicine Service API",
+    "description": "Postman collection for telemedicine-service endpoints (video session management with Jitsi link generation).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "7a6f23f4-a9de-4f97-a8c9-2ec3082f8a1d"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Actuator Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Public health endpoint. No auth token required."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Video Sessions",
+      "item": [
+        {
+          "name": "Create Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appointmentId\": \"appt-1001\",\n  \"patientId\": \"patient-001\",\n  \"patientName\": \"John Doe\",\n  \"doctorId\": \"doctor-001\",\n  \"doctorName\": \"Dr. Smith\",\n  \"scheduledStartTime\": \"2026-04-16T10:00:00Z\",\n  \"durationMinutes\": 30,\n  \"notes\": \"Follow-up consultation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/telemedicine/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "telemedicine",
+                "sessions"
+              ]
+            },
+            "description": "Creates a new video consultation session."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 or 200', function () {",
+                  "    pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "let jsonData = {};",
+                  "try { jsonData = pm.response.json(); } catch (e) {}",
+                  "if (jsonData && jsonData.sessionId) {",
+                  "    pm.collectionVariables.set('sessionId', jsonData.sessionId);",
+                  "}",
+                  "if (jsonData && jsonData.patientId) {",
+                  "    pm.collectionVariables.set('patientId', jsonData.patientId);",
+                  "}",
+                  "if (jsonData && jsonData.doctorId) {",
+                  "    pm.collectionVariables.set('doctorId', jsonData.doctorId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Session By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/telemedicine/sessions/{{sessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "telemedicine",
+                "sessions",
+                "{{sessionId}}"
+              ]
+            },
+            "description": "Fetches one video session by sessionId."
+          },
+          "response": []
+        },
+        {
+          "name": "Start Session (Get Jitsi URL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/telemedicine/sessions/{{sessionId}}/start?userDisplayName={{userDisplayName}}&userEmail={{userEmail}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "telemedicine",
+                "sessions",
+                "{{sessionId}}",
+                "start"
+              ],
+              "query": [
+                {
+                  "key": "userDisplayName",
+                  "value": "{{userDisplayName}}"
+                },
+                {
+                  "key": "userEmail",
+                  "value": "{{userEmail}}"
+                }
+              ]
+            },
+            "description": "Starts the video session for the authenticated user and returns Jitsi Meet URL as plain text."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jitsiUrl = pm.response.text();",
+                  "if (jitsiUrl) {",
+                  "    pm.collectionVariables.set('jitsiMeetUrl', jitsiUrl);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "End Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/telemedicine/sessions/{{sessionId}}/end",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "telemedicine",
+                "sessions",
+                "{{sessionId}}",
+                "end"
+              ]
+            },
+            "description": "Ends an active video session."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Session",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/telemedicine/sessions/{{sessionId}}/cancel?reason={{cancelReason}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "telemedicine",
+                "sessions",
+                "{{sessionId}}",
+                "cancel"
+              ],
+              "query": [
+                {
+                  "key": "reason",
+                  "value": "{{cancelReason}}"
+                }
+              ]
+            },
+            "description": "Cancels a session before it starts."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/telemedicine/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "telemedicine",
+                "sessions"
+              ]
+            },
+            "description": "Gets sessions for currently authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Sessions (Legacy)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/telemedicine/sessions/my-sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "telemedicine",
+                "sessions",
+                "my-sessions"
+              ]
+            },
+            "description": "Backward-compatible endpoint for authenticated user's sessions."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Upcoming Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/telemedicine/sessions/upcoming?isDoctor={{isDoctor}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "telemedicine",
+                "sessions",
+                "upcoming"
+              ],
+              "query": [
+                {
+                  "key": "isDoctor",
+                  "value": "{{isDoctor}}"
+                }
+              ]
+            },
+            "description": "Gets scheduled/upcoming sessions. Set isDoctor=true for doctor context."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sessions By Doctor",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/telemedicine/sessions/doctor/{{doctorId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "telemedicine",
+                "sessions",
+                "doctor",
+                "{{doctorId}}"
+              ]
+            },
+            "description": "Gets all sessions for a specific doctor."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sessions By Patient",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/telemedicine/sessions/patient/{{patientId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "telemedicine",
+                "sessions",
+                "patient",
+                "{{patientId}}"
+              ]
+            },
+            "description": "Gets all sessions for a specific patient."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8085"
+    },
+    {
+      "key": "authToken",
+      "value": "paste-jwt-token-here"
+    },
+    {
+      "key": "sessionId",
+      "value": "replace-after-create"
+    },
+    {
+      "key": "doctorId",
+      "value": "doctor-001"
+    },
+    {
+      "key": "patientId",
+      "value": "patient-001"
+    },
+    {
+      "key": "userDisplayName",
+      "value": "John Doe"
+    },
+    {
+      "key": "userEmail",
+      "value": "john.doe@example.com"
+    },
+    {
+      "key": "isDoctor",
+      "value": "false"
+    },
+    {
+      "key": "cancelReason",
+      "value": "Doctor unavailable"
+    },
+    {
+      "key": "jitsiMeetUrl",
+      "value": ""
+    }
+  ]
+}

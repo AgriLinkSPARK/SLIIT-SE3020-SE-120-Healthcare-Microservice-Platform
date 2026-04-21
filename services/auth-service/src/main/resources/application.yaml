@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: auth-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb+srv://chamithu_db_user:wVyYgnFqzCAK6WZO@cluster0.pygjnpf.mongodb.net/auth_service?appName=Cluster0}
+
+server:
+  port: ${SERVER_PORT:8081}
+
+jwt:
+  issuer: healthcare-platform
+  secret: ${JWT_SECRET:replace-with-a-strong-secret-key-for-dev-only}
+  expiration-minutes: ${JWT_EXPIRATION_MINUTES:120}
+
+auth:
+  seed-admin:
+    enabled: ${AUTH_SEED_ADMIN_ENABLED:true}
+    full-name: ${AUTH_ADMIN_FULL_NAME:Platform Administrator}
+    email: ${AUTH_ADMIN_EMAIL:admin@healthcare.local}
+    password: ${AUTH_ADMIN_PASSWORD:Admin@123456}

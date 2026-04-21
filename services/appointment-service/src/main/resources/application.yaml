@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: appointment-service
+  data:
+    mongodb:
+      uri: ${SPRING_MONGODB_URI:mongodb://mongodb:27017/healthcare_appointments}
+      database: ${SPRING_MONGODB_DATABASE:healthcare_appointments}
+      auto-index-creation: true
+
+server:
+  port: ${SERVER_PORT:8002}
+
+logging:
+  level:
+    root: INFO
+    com.sliit.healthcare: DEBUG

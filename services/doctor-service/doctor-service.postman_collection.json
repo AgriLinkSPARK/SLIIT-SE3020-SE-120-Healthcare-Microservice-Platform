@@ -1,0 +1,523 @@
+{
+  "info": {
+    "_postman_id": "b4c1b3e2-9a7a-4f4f-9d91-0f8d3a1d9a10",
+    "name": "Healthcare Doctor Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8083"
+    },
+    {
+      "key": "doctorToken",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "slotId",
+      "value": ""
+    },
+    {
+      "key": "requestId",
+      "value": ""
+    },
+    {
+      "key": "consultationId",
+      "value": ""
+    },
+    {
+      "key": "patientId",
+      "value": ""
+    },
+    {
+      "key": "doctorId",
+      "value": ""
+    },
+    {
+      "key": "patientReportId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Doctor - Upsert Profile",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/profile",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "profile"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullName\": \"Dr. Amal Perera\",\n  \"email\": \"amal@example.com\",\n  \"specialization\": \"Cardiology\",\n  \"qualifications\": \"MBBS, MD\",\n  \"bio\": \"Experienced cardiologist\",\n  \"yearsOfExperience\": 10,\n  \"consultationFee\": 2500.00,\n  \"phone\": \"0771234567\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Doctor - Get Profile",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/profile",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "profile"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Doctor - Create Availability",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/availability",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "availability"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"startTime\": \"2026-04-14T09:00:00Z\",\n  \"endTime\": \"2026-04-14T10:00:00Z\",\n  \"locationType\": \"VIDEO\",\n  \"status\": \"AVAILABLE\",\n  \"notes\": \"Morning consultation slot\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Doctor - Get Availability",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/availability",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "availability"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Doctor - Update Availability",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/availability/{{slotId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "availability",
+            "{{slotId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"startTime\": \"2026-04-14T10:00:00Z\",\n  \"endTime\": \"2026-04-14T11:00:00Z\",\n  \"locationType\": \"VIDEO\",\n  \"status\": \"AVAILABLE\",\n  \"notes\": \"Updated slot\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Doctor - Delete Availability",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/availability/{{slotId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "availability",
+            "{{slotId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Doctor - Create Appointment Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/appointments/requests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "appointments",
+            "requests"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"appointmentId\": \"APT-1001\",\n  \"patientId\": \"{{patientId}}\",\n  \"appointmentTime\": \"2026-04-14T12:00:00Z\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Doctor - Get Appointment Requests",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/appointments/requests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "appointments",
+            "requests"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Doctor - Accept Appointment Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/appointments/requests/{{requestId}}/accept",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "appointments",
+            "requests",
+            "{{requestId}}",
+            "accept"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Doctor - Reject Appointment Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/appointments/requests/{{requestId}}/reject",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "appointments",
+            "requests",
+            "{{requestId}}",
+            "reject"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Doctor unavailable at that time\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Doctor - Create Consultation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/consultations",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "consultations"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"consultationId\": \"CONS-1001\",\n  \"appointmentId\": \"APT-1001\",\n  \"patientId\": \"{{patientId}}\",\n  \"meetingUrl\": \"https://meet.example.com/room/CONS-1001\",\n  \"scheduledAt\": \"2026-04-14T12:30:00Z\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Doctor - Get Consultations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/consultations",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "consultations"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Doctor - Start Consultation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/consultations/{{consultationId}}/start",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "consultations",
+            "{{consultationId}}",
+            "start"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Doctor - Complete Consultation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/consultations/{{consultationId}}/complete",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "consultations",
+            "{{consultationId}}",
+            "complete"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"notes\": \"Patient responded well to treatment\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Doctor - Issue Prescription",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/prescriptions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "prescriptions"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prescriptionId\": \"PR-1001\",\n  \"patientId\": \"{{patientId}}\",\n  \"consultationId\": \"{{consultationId}}\",\n  \"diagnosis\": \"Seasonal flu\",\n  \"medications\": [\n    \"Paracetamol 500mg\",\n    \"Cetirizine 10mg\"\n  ],\n  \"additionalNotes\": \"Take rest and drink fluids\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Doctor - Get Prescriptions",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/prescriptions?patientId={{patientId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "prescriptions"
+          ],
+          "query": [
+            {
+              "key": "patientId",
+              "value": "{{patientId}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Doctor - Get Patient Reports",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{doctorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/doctor/patient-reports/{{patientId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "doctor",
+            "patient-reports",
+            "{{patientId}}"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,183 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: healthcare-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      SPRING_MONGODB_URI: mongodb://mongodb:27017/healthcare_payments
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/healthcare_payments
+      SPRING_MONGODB_DATABASE: healthcare_payments
+      SPRING_MONGODB_URI_ATLAS: mongodb+srv://aenuine_db_user:jPKz61Zhk5qQkWE3@cluster0.pgglpoh.mongodb.net/?appName=Cluster0&serverSelectionTimeoutMS=3000&connectTimeoutMS=3000&socketTimeoutMS=3000
+      STRIPE_API_KEY: ${STRIPE_API_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+    ports:
+      - "8004:8004"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  appointment-service:
+    build:
+      context: ./services/appointment-service
+      dockerfile: Dockerfile
+    container_name: healthcare-appointment-service
+    environment:
+      SERVER_PORT: 8002
+      SPRING_MONGODB_URI: mongodb+srv://aenuine_db_user:1UGbqsYcQDXx1doi@cluster0.x7dnyc7.mongodb.net/?appName=Cluster0
+      SPRING_MONGODB_DATABASE: healthcare_appointments
+    ports:
+      - "8002:8002"
+
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: healthcare-auth-service
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8081
+      MONGODB_URI: mongodb+srv://chamithu_db_user:wVyYgnFqzCAK6WZO@cluster0.pygjnpf.mongodb.net/auth_service?appName=Cluster0
+      SPRING_DATA_MONGODB_URI: mongodb+srv://chamithu_db_user:wVyYgnFqzCAK6WZO@cluster0.pygjnpf.mongodb.net/auth_service?appName=Cluster0
+      SPRING_MONGODB_URI: mongodb+srv://chamithu_db_user:wVyYgnFqzCAK6WZO@cluster0.pygjnpf.mongodb.net/auth_service?appName=Cluster0
+      JWT_SECRET: replace-with-a-strong-prod-secret
+      JWT_EXPIRATION_MINUTES: 120
+      AUTH_SEED_ADMIN_ENABLED: "true"
+      AUTH_ADMIN_FULL_NAME: Platform Administrator
+      AUTH_ADMIN_EMAIL: admin@healthcare.local
+      AUTH_ADMIN_PASSWORD: Admin@123456
+    ports:
+      - "8081:8081"
+
+  doctor-service:
+    build:
+      context: ./services/doctor-service
+      dockerfile: Dockerfile
+    container_name: healthcare-doctor-service
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8083
+      MONGODB_URI: mongodb://mongodb:27017/healthcare_doctor
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/healthcare_doctor
+      SPRING_MONGODB_URI: mongodb://mongodb:27017/healthcare_doctor
+      MONGODB_URI_ATLAS: mongodb+srv://chamithued_db_user:65SBkoG0ZUmw2fKG@cluster0.m8gi3fh.mongodb.net/healthcare_doctor?appName=Cluster0
+      JWT_SECRET: replace-with-a-strong-prod-secret
+    ports:
+      - "8083:8083"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_GATEWAY_URL: ${VITE_API_GATEWAY_URL:-http://localhost:8081/api}
+        VITE_DOCTOR_SERVICE_URL: ${VITE_DOCTOR_SERVICE_URL:-http://localhost:8083}
+        VITE_PAYMENT_SERVICE_URL: ${VITE_PAYMENT_SERVICE_URL:-http://localhost:8004}
+        VITE_APPOINTMENT_SERVICE_URL: ${VITE_APPOINTMENT_SERVICE_URL:-http://localhost:8002/api/v1/appointments}
+        VITE_TELEMEDICINE_SERVICE_URL: ${VITE_TELEMEDICINE_SERVICE_URL:-/api/telemedicine/sessions}
+        VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY}
+    container_name: healthcare-frontend
+    depends_on:
+      auth-service:
+        condition: service_started
+      doctor-service:
+        condition: service_started
+      payment-service:
+        condition: service_healthy
+      appointment-service:
+        condition: service_started
+      telemedicine-service:
+        condition: service_started
+    ports:
+      - "3000:80"
+
+  telemedicine-service:
+    build:
+      context: ./services/telemedicine-service
+      dockerfile: Dockerfile
+    container_name: healthcare-telemedicine-service
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8085
+      MONGODB_URI: mongodb://mongodb:27017/healthcare_telemedicine
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/healthcare_telemedicine
+      SPRING_MONGODB_URI: mongodb://mongodb:27017/healthcare_telemedicine
+      JWT_SECRET: replace-with-a-strong-prod-secret
+      JITSI_API_URL: https://api.jitsi.net
+      JITSI_API_KEY: ${JITSI_API_KEY:-vpaas-magic-cookie-f260d9e63dca4852a4848ea16aed6b00/de868f}
+      JITSI_APP_ID: vpaas-magic-cookie-f260d9e63dca4852a4848ea16aed6b00
+      JITSI_PRIVATE_KEY: |
+        -----BEGIN PRIVATE KEY-----
+        MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDU6I9Jbfuve6Rs
+        s8n6z84CaEKsur7AD8maOa5//trQR+yuLpv4tOdVkJiS8NEyB/Zitkkx+Gq2OPdN
+        1i6YKnPrkOYDF6nOaQzIICYMe5HE3gKX5DBMxwlnNH5esz0Bf58XnWp+uWZcpqaz
+        Q8E4uodF0TM7QYH9hy94+StXa4li3UBhIJe9KhUVTdBSJkV2OEK8YRh95y2o+UA6
+        1AUaDP2F0RhZdpYwc+ZWq4B6rDTBpCU8tAMhkKULF7u74su5vU1r1pug2HFNyOXh
+        JnF4j1TDJ4sps0oOBgm3oyh+rk7LIzqEpfL+vp9X0QDP54wKEKGtmV6uWim9n24P
+        ykOrNbbDAgMBAAECggEBAJwQ/TeuT1gLIjQsdlpMCY7qLjW/jiPrbrSGo8tfXbZf
+        grcLo3lj4k9uduj/bdlmzMz/IhhnKJH6oA2GexE/zUlYJcMOjYKorp3kMv/jdK8C
+        rpP4yQ7+t33XlOqGKKn4iv4cffv2m3o/DuNJP1H+KTqcZxmAo3Dcr4fV3ldulH7K
+        qVM/w7pwRrxyo1IYPN2v+w7V9sIvm+D9LQSdGEactRYIfKv2Y7zNkZfnyo8CM7EJ
+        PzFfv9pg/zAzGeCeh/Ik/jH5DP6KsHUTrL+VdIXMuRZkx1I0jqyq1gwcih4GeRSn
+        icSmK1ZfIGwGnxk/Vm2Z2DEqL6gMo93iZBFuiFV6SQECgYEA+lxJ9T4ZxNG4MZC1
+        yd84JjcjG/2eprMK+TP90BM3gkpxVXXTfb8s/iSvbFUHWxPR1uD9q3OVHMJuKKZZ
+        ggMrQ+us+agm4FrUaeYo/UijR/osFBhe33nbxMHAZcRfpWwp6NsT6FFZ+uOh+IHg
+        r0yqeTJ7NHdkOuXyYUucDCsr99ECgYEA2bRNaRpj6C0cSwukKEHMLsXdkUhx+Ze1
+        2C0btmR3zRGxmUHrvZQZg22/BIzp8OVNCjg/sYjjkLfq39fN4OEs3yF7ni3xDJ+L
+        5n+PqCMgR23OPuKgw5YIZ+GJdTXvNxpVn7KbzedbvSnBPZgrsoI5v4y2Oc5HQJh2
+        mXiqu6Kj/lMCgYAJ7Lqp1CplWQL6RAhQ1l59dVYY9/bgGNzogB0hsIFU0uqnPqKB
+        q6B2+rFRlBVUkPaSlBy6PTy+BR8k0WNe+g0vBhq3Uuknn7In+I3LbKO8aLhym3y3
+        UzdZF20vG5fHEQCgUH77iK4OehOjrFJh4KIpZ8zmiY0ZoJ/5J2wqN1Po4QKBgFOR
+        X6m5xKIKNvMju9bsMvm9YGj1ezLJJred0SZ5eHdSlG71HA4AvK5zwUB46xBapPEI
+        WILIvjn+L33PdCsfpL7eNnqovgAPen93deif2zMwFlyTWAzcGcvuinpgwrvPMxED
+        WcV3SwLY9WG0eQmj7ZD27bhQ048bN2OAK2Gtc/AbAoGAeiinU8xcM+zXVrfzrU1Q
+        MhYD+F58zlJqGGUvMR0+0D59zAFI5hkFIs1Z7648yRLoLvXCqFSzW/oSoZHosrXI
+        FaVo7GoocdfK0fTkLkS2BRyH/8i7fwvc7iFDYcVZtzND3YAE9M6VBUhGm/v4fBdP
+        yCx9nhWN3UKcGq5pv26YmKA=
+        -----END PRIVATE KEY-----
+      JITSI_PUBLIC_KEY: |
+        -----BEGIN PUBLIC KEY-----
+        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1OiPSW37r3ukbLPJ+s/O
+        AmhCrLq+wA/Jmjmuf/7a0Efsri6b+LTnVZCYkvDRMgf2YrZJMfhqtjj3TdYumCpz
+        65DmAxepzmkMyCAmDHuRxN4Cl+QwTMcJZzR+XrM9AX+fF51qfrlmXKams0PBOLqH
+        RdEzO0GB/YcvePkrV2uJYt1AYSCXvSoVFU3QUiZFdjhCvGEYfectqPlAOtQFGgz9
+        hdEYWXaWMHPmVquAeqw0waQlPLQDIZClCxe7u+LLub1Na9aboNhxTcjl4SZxeI9U
+        wyeLKbNKDgYJt6Mofq5OyyM6hKXy/r6fV9EAz+eMChChrZlerlopvZ9uD8pDqzW2
+        wwIDAQAB
+        -----END PUBLIC KEY-----
+      JITSI_CONFERENCE_DURATION: 3600
+    ports:
+      - "8085:8085"
+
+volumes:
+  mongo_data:
