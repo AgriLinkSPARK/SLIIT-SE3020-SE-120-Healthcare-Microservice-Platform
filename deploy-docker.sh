@@ -65,10 +65,42 @@ create_env_file() {
 STRIPE_API_KEY=sk_test_YOUR_KEY_HERE
 STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE
 STRIPE_WEBHOOK_SECRET=whsec_YOUR_SECRET_HERE
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE
 
-# MongoDB Configuration
-MONGO_ROOT_USERNAME=admin
-MONGO_ROOT_PASSWORD=admin123
+# Optional Atlas URIs (leave blank for local MongoDB)
+PAYMENT_SPRING_MONGODB_URI_ATLAS=
+APPOINTMENT_SPRING_MONGODB_URI_ATLAS=
+DOCTOR_MONGODB_URI_ATLAS=
+
+# Auth Service Configuration
+AUTH_MONGODB_URI=mongodb://mongodb:27017/auth_service
+AUTH_SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/auth_service
+AUTH_SPRING_MONGODB_URI=mongodb://mongodb:27017/auth_service
+AUTH_JWT_SECRET=replace-with-a-strong-secret
+AUTH_JWT_EXPIRATION_MINUTES=120
+AUTH_SEED_ADMIN_ENABLED=true
+AUTH_ADMIN_FULL_NAME=Platform Administrator
+AUTH_ADMIN_EMAIL=admin@healthcare.local
+AUTH_ADMIN_PASSWORD=replace-with-strong-password
+
+# Doctor Service
+DOCTOR_JWT_SECRET=replace-with-a-strong-secret
+
+# Telemedicine + Jitsi
+TELEMEDICINE_JWT_SECRET=replace-with-a-strong-secret
+JITSI_API_URL=https://api.jitsi.net
+JITSI_API_KEY=replace-with-jitsi-api-key
+JITSI_APP_ID=replace-with-jitsi-app-id
+JITSI_PRIVATE_KEY=replace-with-private-key
+JITSI_PUBLIC_KEY=replace-with-public-key
+JITSI_CONFERENCE_DURATION=3600
+
+# Frontend
+VITE_API_GATEWAY_URL=http://localhost:8081/api
+VITE_DOCTOR_SERVICE_URL=http://localhost:8083
+VITE_PAYMENT_SERVICE_URL=http://localhost:8004
+VITE_APPOINTMENT_SERVICE_URL=http://localhost:8002/api/v1/appointments
+VITE_TELEMEDICINE_SERVICE_URL=/api/telemedicine/sessions
 
 # Application Configuration
 JAVA_OPTS=-Xmx512m -Xms256m
