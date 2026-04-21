@@ -103,3 +103,8 @@ export const issueDoctorPrescription = async (payload) => {
   const { data } = await doctorApi.post(`${DOCTOR_PATH}/prescriptions`, payload)
   return data
 }
+
+export const getDoctorPatientReports = async (patientId) => {
+  const { data } = await doctorApi.get(`${DOCTOR_PATH}/patient-reports/${patientId}`)
+  return data
+}

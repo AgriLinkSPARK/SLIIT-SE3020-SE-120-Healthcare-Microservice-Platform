@@ -33,6 +33,19 @@ const splitMedications = (value) =>
     .map((item) => item.trim())
     .filter(Boolean)
 
+const resolvePatientName = (appointment) => {
+  const candidates = [
+    appointment?.patientName,
+    appointment?.patientFullName,
+    appointment?.patient?.fullName,
+    appointment?.patient?.name,
+    appointment?.patientFirstName,
+    appointment?.name,
+  ]
+
+  return candidates.find((item) => typeof item === 'string' && item.trim()) || appointment?.patientId || 'Unknown patient'
+}
+
 export default function PrescriptionsPage() {
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -45,7 +58,8 @@ export default function PrescriptionsPage() {
   const [saving, setSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
-  const [patientFilter, setPatientFilter] = useState(searchParams.get('patientId') || '')
+  const [isWriteModalOpen, setIsWriteModalOpen] = useState(false)
+  const [selectedPatientId, setSelectedPatientId] = useState(searchParams.get('patientId') || '')
 
   const [form, setForm] = useState(() => ({
     prescriptionId: generatePrescriptionId(),
@@ -67,7 +81,7 @@ export default function PrescriptionsPage() {
         const [appointmentData, consultationData, prescriptionData] = await Promise.all([
           doctorId ? getAppointmentsByDoctor(doctorId) : Promise.resolve([]),
           getDoctorConsultations(),
-          getDoctorPrescriptions(patientFilter),
+          getDoctorPrescriptions(),
         ])
 
         if (cancelled) return
@@ -93,7 +107,7 @@ export default function PrescriptionsPage() {
     return () => {
       cancelled = true
     }
-  }, [doctorId, patientFilter])
+  }, [doctorId])
 
   const handleFieldChange = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }))
@@ -127,7 +141,30 @@ export default function PrescriptionsPage() {
     [consultations, form.patientId],
   )
 
+  const visiblePrescriptions = useMemo(() => {
+    const filtered = selectedPatientId
+      ? prescriptions.filter((prescription) => prescription.patientId === selectedPatientId)
+      : prescriptions
+
+    return [...filtered].sort((first, second) => {
+      const secondTime = new Date(second.issuedAt || second.createdAt || 0).getTime()
+      const firstTime = new Date(first.issuedAt || first.createdAt || 0).getTime()
+      return secondTime - firstTime
+    })
+  }, [prescriptions, selectedPatientId])
+
+  const patientOptions = useMemo(
+    () =>
+      bookedPatients.map((appointment) => ({
+        patientId: appointment.patientId,
+        patientName: resolvePatientName(appointment),
+      })),
+    [bookedPatients],
+  )
+
   const handleSelectPatient = (appointment) => {
+    setSelectedPatientId(appointment.patientId || '')
+
     const matchedConsultation = consultations.find((consultation) => consultation.patientId === appointment.patientId)
 
     setForm((current) => ({
@@ -143,6 +180,13 @@ export default function PrescriptionsPage() {
     if (matchedConsultation?.consultationId || matchedConsultation?.id) {
       next.set('consultationId', matchedConsultation.consultationId || matchedConsultation.id)
     }
+    setSearchParams(next)
+  }
+
+  const clearSelectedPatient = () => {
+    setSelectedPatientId('')
+    const next = new URLSearchParams(searchParams)
+    next.delete('patientId')
     setSearchParams(next)
   }
 
@@ -178,18 +222,49 @@ export default function PrescriptionsPage() {
       setForm((current) => ({
         ...current,
         prescriptionId: generatePrescriptionId(),
+        patientId: '',
+        consultationId: '',
         diagnosis: '',
         medications: '',
         additionalNotes: '',
       }))
+      setIsWriteModalOpen(false)
 
-      const prescriptionData = await getDoctorPrescriptions(patientFilter)
+      const prescriptionData = await getDoctorPrescriptions()
       setPrescriptions(Array.isArray(prescriptionData) ? prescriptionData : [])
     } catch (error) {
       setErrorMessage(error.response?.data?.message || 'Failed to issue prescription')
     } finally {
       setSaving(false)
     }
+  }
+
+  const openWriteModal = () => {
+    setErrorMessage('')
+    setSuccessMessage('')
+    setIsWriteModalOpen(true)
+  }
+
+  const closeWriteModal = () => {
+    if (saving) {
+      return
+    }
+    setIsWriteModalOpen(false)
+  }
+
+  const handlePatientChange = (patientId) => {
+    const selected = bookedPatients.find((appointment) => appointment.patientId === patientId)
+
+    if (selected) {
+      handleSelectPatient(selected)
+      return
+    }
+
+    setForm((current) => ({
+      ...current,
+      patientId,
+      consultationId: '',
+    }))
   }
 
   return (
@@ -202,9 +277,15 @@ export default function PrescriptionsPage() {
                 <p className="text-lg font-semibold text-[#1b2435]">Booked patients</p>
                 <p className="text-sm text-slate-500">Select a booked patient to issue a prescription.</p>
               </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                {bookedPatients.length} patients
-              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={openWriteModal}
+                  className="rounded-lg bg-brand-500 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-700"
+                >
+                  Write Prescription
+                </button>
+              </div>
             </div>
 
             {loading ? (
@@ -216,7 +297,7 @@ export default function PrescriptionsPage() {
             ) : (
               <div className="space-y-3">
                 {bookedPatients.map((appointment) => {
-                  const isSelected = appointment.patientId === form.patientId
+                  const isSelected = appointment.patientId === selectedPatientId
 
                   return (
                     <button
@@ -249,42 +330,6 @@ export default function PrescriptionsPage() {
               </div>
             )}
           </div>
-
-          <div className="rounded-xl border border-[#e8ecf4] bg-white p-6 shadow-sm">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-lg font-semibold text-[#1b2435]">Issue prescription</p>
-                <p className="text-sm text-slate-500">Create a digital prescription for the selected patient.</p>
-              </div>
-              <button
-                type="button"
-                onClick={handleGenerateNewId}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                New ID
-              </button>
-            </div>
-
-            {errorMessage && (
-              <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                {errorMessage}
-              </div>
-            )}
-
-            {successMessage && (
-              <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                {successMessage}
-              </div>
-            )}
-
-            <PrescriptionForm
-              form={form}
-              onChange={handleFieldChange}
-              onSubmit={handleSubmit}
-              saving={saving}
-              consultations={consultationOptions}
-            />
-          </div>
         </div>
 
         <div className="space-y-4">
@@ -292,37 +337,32 @@ export default function PrescriptionsPage() {
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-lg font-semibold text-[#1b2435]">Recent prescriptions</p>
-                <p className="text-sm text-slate-500">Filter by patient ID or review latest records.</p>
+                <p className="text-sm text-slate-500">
+                  {selectedPatientId
+                    ? `Showing prescriptions for patient: ${selectedPatientId}`
+                    : 'Showing all prescriptions, newest first.'}
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <input
-                  value={patientFilter}
-                  onChange={(event) => {
-                    const nextValue = event.target.value
-                    setPatientFilter(nextValue)
-                    const next = new URLSearchParams(searchParams)
-                    if (nextValue) {
-                      next.set('patientId', nextValue)
-                    } else {
-                      next.delete('patientId')
-                    }
-                    setSearchParams(next)
-                  }}
-                  placeholder="Filter by patient ID"
-                  className="w-44 rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                />
-              </div>
+              {selectedPatientId && (
+                <button
+                  type="button"
+                  onClick={clearSelectedPatient}
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Show all
+                </button>
+              )}
             </div>
 
             {loading ? (
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Loading prescriptions...</div>
-            ) : prescriptions.length === 0 ? (
+            ) : visiblePrescriptions.length === 0 ? (
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                No prescriptions found.
+                {selectedPatientId ? 'No prescriptions found for this patient.' : 'No prescriptions found.'}
               </div>
             ) : (
               <div className="space-y-3">
-                {prescriptions.map((prescription) => (
+                {visiblePrescriptions.map((prescription) => (
                   <article key={prescription.id || prescription.prescriptionId} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -355,6 +395,57 @@ export default function PrescriptionsPage() {
           </div>
         </div>
       </div>
+
+      {isWriteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-lg font-semibold text-[#1b2435]">Write prescription</p>
+                <p className="text-sm text-slate-500">Only patients with appointments are available in the dropdown.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleGenerateNewId}
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  New ID
+                </button>
+                <button
+                  type="button"
+                  onClick={closeWriteModal}
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            {errorMessage && (
+              <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {errorMessage}
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                {successMessage}
+              </div>
+            )}
+
+            <PrescriptionForm
+              form={form}
+              onChange={handleFieldChange}
+              onSubmit={handleSubmit}
+              saving={saving}
+              consultations={consultationOptions}
+              patients={patientOptions}
+              onPatientChange={handlePatientChange}
+            />
+          </div>
+        </div>
+      )}
     </DoctorPageLayout>
   )
 }

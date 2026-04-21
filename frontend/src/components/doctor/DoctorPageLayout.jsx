@@ -29,7 +29,7 @@ export default function DoctorPageLayout({ activeLabel, title, children }) {
       <div className="flex min-h-screen w-full gap-0">
         <Sidebar brand="HealthCheck" menuItems={menuItems} activeLabel={activeLabel} />
 
-        <main className="flex min-h-screen flex-1 flex-col overflow-hidden bg-white">
+        <main className="flex min-h-screen flex-1 flex-col overflow-hidden bg-white lg:ml-[240px]">
           <header className="relative border-b border-[#e8ecf4] bg-[#f9fbff] px-5 pb-5 pt-6 md:px-8">
             <div className="absolute inset-x-0 top-0 h-9 bg-gradient-to-r from-[#f4f7ff] via-white to-[#f2f6ff]" />
             <div className="relative z-10 flex items-start justify-between gap-4">

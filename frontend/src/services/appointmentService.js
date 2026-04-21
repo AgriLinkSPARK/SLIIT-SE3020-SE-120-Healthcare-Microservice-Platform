@@ -39,6 +39,13 @@ export const updateAppointment = async (appointmentId, payload) => {
   return data
 }
 
+export const updateAppointmentStatus = async (appointmentId, status) => {
+  const { data } = await appointmentApi.patch(`/${appointmentId}/status`, null, {
+    params: { status },
+  })
+  return data
+}
+
 export const cancelAppointment = async (appointmentId) => {
   const { data } = await appointmentApi.patch(`/${appointmentId}/cancel`)
   return data

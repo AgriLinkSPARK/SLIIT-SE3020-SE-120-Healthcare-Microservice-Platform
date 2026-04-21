@@ -1,4 +1,14 @@
-export default function PrescriptionForm({ form, onChange, onSubmit, saving, consultations }) {
+export default function PrescriptionForm({
+  form,
+  onChange,
+  onSubmit,
+  saving,
+  consultations,
+  patients = [],
+  onPatientChange,
+}) {
+  const hasPatientOptions = Array.isArray(patients) && patients.length > 0
+
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
       <div className="grid gap-4 md:grid-cols-2">
@@ -13,13 +23,34 @@ export default function PrescriptionForm({ form, onChange, onSubmit, saving, con
         </label>
 
         <label className="space-y-1 text-sm font-medium text-slate-700">
-          <span>Patient ID</span>
-          <input
-            value={form.patientId}
-            onChange={(event) => onChange('patientId', event.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2"
-            placeholder="Patient ID"
-          />
+          <span>Patient</span>
+          {hasPatientOptions ? (
+            <select
+              value={form.patientId}
+              onChange={(event) => {
+                if (onPatientChange) {
+                  onPatientChange(event.target.value)
+                } else {
+                  onChange('patientId', event.target.value)
+                }
+              }}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+            >
+              <option value="">Select patient with appointment</option>
+              {patients.map((patient) => (
+                <option key={patient.patientId} value={patient.patientId}>
+                  {patient.patientName || patient.patientId} ({patient.patientId})
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              value={form.patientId}
+              onChange={(event) => onChange('patientId', event.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2"
+              placeholder="Patient ID"
+            />
+          )}
         </label>
       </div>
 

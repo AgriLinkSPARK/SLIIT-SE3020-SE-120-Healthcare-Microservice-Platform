@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import DoctorPageLayout from '../../components/doctor/DoctorPageLayout'
-import { getAppointmentsByDoctor } from '../../services/appointmentService'
+import { getAppointmentsByDoctor, updateAppointmentStatus } from '../../services/appointmentService'
 import useAuth from '../../hooks/useAuth'
-import { ensureVideoSessionForAppointment } from '../../services/telemedicineService'
 
 const resolveDoctorId = (user) => {
   const candidates = [
@@ -21,23 +19,12 @@ const resolveDoctorId = (user) => {
   return value || ''
 }
 
-const resolveDisplayName = (user) => {
-  const candidates = [user?.fullName, user?.name, user?.firstName, user?.user?.fullName, user?.user?.name]
-  return candidates.find((item) => typeof item === 'string' && item.trim()) || ''
-}
-
-const resolveEmail = (user) => {
-  const candidates = [user?.email, user?.user?.email]
-  return candidates.find((item) => typeof item === 'string' && item.trim()) || ''
-}
-
 export default function AppointmentsPage() {
   const { user } = useAuth()
-  const navigate = useNavigate()
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
-  const [joiningAppointmentId, setJoiningAppointmentId] = useState('')
+  const [updatingAppointmentId, setUpdatingAppointmentId] = useState('')
 
   const doctorId = resolveDoctorId(user)
 
@@ -62,47 +49,48 @@ export default function AppointmentsPage() {
     }
   }, [doctorId])
 
-  const handleStartConsultation = async (appointment) => {
-    try {
-      setJoiningAppointmentId(appointment.id)
-      setErrorMessage('')
-
-      const session = await ensureVideoSessionForAppointment(appointment.id, {
-        appointmentId: appointment.id,
-        patientId: appointment.patientId || '',
-        patientName: appointment.patientName || appointment.patientId || 'Patient',
-        patientEmail: appointment.patientEmail || '',
-        doctorId: doctorId || appointment.doctorId || '',
-        doctorName: resolveDisplayName(user) || appointment.doctorName || 'Doctor',
-        doctorEmail: resolveEmail(user),
-        scheduledStartTime: appointment.appointmentDateTime,
-        durationMinutes: Number(appointment.durationMinutes || 30),
-        notes: appointment.notes || '',
-      })
-
-      navigate(`/telemedicine/sessions/${session.sessionId}`, {
-        state: {
-          session,
-          appointment,
-          userEmail: resolveEmail(user),
-        },
-      })
-    } catch (error) {
-      setErrorMessage(error.response?.data?.message || 'Failed to open the video consultation')
-    } finally {
-      setJoiningAppointmentId('')
-    }
-  }
-
   useEffect(() => {
     loadAppointments()
   }, [loadAppointments])
+
+  const updateDecision = useCallback(async (appointment, nextStatus) => {
+    const appointmentId = appointment?.id || appointment?._id || ''
+
+    if (!appointmentId) {
+      setErrorMessage('Unable to update appointment status: appointment id is missing.')
+      return
+    }
+
+    setUpdatingAppointmentId(appointmentId)
+    setErrorMessage('')
+
+    try {
+      const updatedAppointment = await updateAppointmentStatus(appointmentId, nextStatus)
+
+      setAppointments((previousAppointments) =>
+        previousAppointments.map((item) => {
+          const itemId = item?.id || item?._id || ''
+          return itemId === appointmentId
+            ? {
+                ...item,
+                ...(updatedAppointment || {}),
+                status: updatedAppointment?.status || nextStatus,
+              }
+            : item
+        })
+      )
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message || 'Failed to update appointment status.')
+    } finally {
+      setUpdatingAppointmentId('')
+    }
+  }, [])
 
   return (
     <DoctorPageLayout activeLabel="Appointments" title="Appointments">
       <div className="rounded-xl border border-[#e8ecf4] bg-white p-6">
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-lg font-semibold text-[#1b2435]">My Appointments (MongoDB)</p>
+          <p className="text-lg font-semibold text-[#1b2435]">My Appointments</p>
           <button
             type="button"
             onClick={loadAppointments}
@@ -127,48 +115,56 @@ export default function AppointmentsPage() {
             <table className="min-w-full divide-y divide-slate-200 text-sm">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Patient</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Doctor</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Specialty</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Type</th>
+                  <th className="px-3 py-2 text-left font-medium text-slate-600">Patient Name</th>
+                  <th className="px-3 py-2 text-left font-medium text-slate-600">Appointment Type</th>
                   <th className="px-3 py-2 text-left font-medium text-slate-600">Date & Time</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Status</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Actions</th>
+                  <th className="px-3 py-2 text-left font-medium text-slate-600">Decision</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {appointments.map((appointment) => (
-                  <tr key={appointment.id}>
-                    <td className="px-3 py-2 text-slate-700">{appointment.patientId}</td>
-                    <td className="px-3 py-2 text-slate-700">{appointment.doctorName}</td>
-                    <td className="px-3 py-2 text-slate-700">{appointment.specialty}</td>
+                  <tr key={appointment.id || appointment._id}>
+                    <td className="px-3 py-2 text-slate-700">
+                      {appointment.patientName || appointment.patientFullName || appointment.patientId || '-'}
+                    </td>
                     <td className="px-3 py-2 text-slate-700">{appointment.type}</td>
                     <td className="px-3 py-2 text-slate-700">
                       {appointment.appointmentDateTime ? new Date(appointment.appointmentDateTime).toLocaleString() : '-'}
                     </td>
-                    <td className="px-3 py-2 text-slate-700">{appointment.status}</td>
                     <td className="px-3 py-2 text-slate-700">
-                      <div className="flex flex-wrap gap-2">
-                        {appointment.type === 'ONLINE_VIDEO' && appointment.status !== 'CANCELLED' && appointment.status !== 'COMPLETED' ? (
+                      {appointment.status === 'CONFIRMED' ? (
+                        <span className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                          Approved
+                        </span>
+                      ) : appointment.status === 'CANCELLED' ? (
+                        <span className="inline-flex rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">
+                          Rejected
+                        </span>
+                      ) : (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                            {appointment.status || 'BOOKED'}
+                          </span>
+
                           <button
                             type="button"
-                            onClick={() => handleStartConsultation(appointment)}
-                            disabled={joiningAppointmentId === appointment.id}
-                            className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+                            onClick={() => updateDecision(appointment, 'CONFIRMED')}
+                            disabled={updatingAppointmentId === (appointment.id || appointment._id)}
+                            className="rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
                           >
-                            {joiningAppointmentId === appointment.id ? 'Preparing room...' : 'Start Consultation'}
+                            Accept
                           </button>
-                        ) : (
-                          <span className="text-xs text-slate-400">Consultation unavailable</span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/doctor/prescriptions?patientId=${encodeURIComponent(appointment.patientId || '')}`)}
-                          className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                        >
-                          Prescribe
-                        </button>
-                      </div>
+
+                          <button
+                            type="button"
+                            onClick={() => updateDecision(appointment, 'CANCELLED')}
+                            disabled={updatingAppointmentId === (appointment.id || appointment._id)}
+                            className="rounded-md border border-rose-300 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
