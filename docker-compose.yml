@@ -43,12 +43,23 @@ services:
       context: ./services/appointment-service
       dockerfile: Dockerfile
     container_name: healthcare-appointment-service
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
     environment:
       SERVER_PORT: 8002
-      SPRING_MONGODB_URI: mongodb+srv://aenuine_db_user:1UGbqsYcQDXx1doi@cluster0.x7dnyc7.mongodb.net/?appName=Cluster0
+      SPRING_MONGODB_URI: mongodb://mongodb:27017/healthcare_appointments
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/healthcare_appointments
       SPRING_MONGODB_DATABASE: healthcare_appointments
+      SPRING_MONGODB_URI_ATLAS: mongodb+srv://aenuine_db_user:1UGbqsYcQDXx1doi@cluster0.x7dnyc7.mongodb.net/?appName=Cluster0
     ports:
       - "8002:8002"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/api/v1/appointments/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   auth-service:
     build:
