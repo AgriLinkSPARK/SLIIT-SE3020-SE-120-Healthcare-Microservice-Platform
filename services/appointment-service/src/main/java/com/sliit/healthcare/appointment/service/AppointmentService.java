@@ -3,7 +3,6 @@ package com.sliit.healthcare.appointment.service;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -11,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.sliit.healthcare.appointment.client.DoctorServiceClient;
 import com.sliit.healthcare.appointment.dto.AppointmentResponse;
 import com.sliit.healthcare.appointment.dto.AppointmentStatusResponse;
 import com.sliit.healthcare.appointment.dto.CreateAppointmentRequest;
@@ -24,43 +24,27 @@ import com.sliit.healthcare.appointment.repository.AppointmentRepository;
 @Service
 public class AppointmentService {
 
-    private static final Map<String, List<String>> DOCTOR_DIRECTORY = Map.of(
-            "CARDIOLOGY", List.of("Dr. Amara Fernando", "Dr. K. Perera"),
-            "DERMATOLOGY", List.of("Dr. Shalini Silva", "Dr. T. Jayasuriya"),
-            "NEUROLOGY", List.of("Dr. Nimal Edirisinghe", "Dr. Ishani Wijeratne"),
-            "PEDIATRICS", List.of("Dr. Kanchana Peris", "Dr. R. De Mel"),
-            "ORTHOPEDICS", List.of("Dr. Harsha Wickramasinghe", "Dr. D. Fernando")
-    );
-
     private final AppointmentRepository appointmentRepository;
+    private final DoctorServiceClient doctorServiceClient;
 
-    public AppointmentService(AppointmentRepository appointmentRepository) {
+    public AppointmentService(AppointmentRepository appointmentRepository,
+                              DoctorServiceClient doctorServiceClient) {
         this.appointmentRepository = appointmentRepository;
+        this.doctorServiceClient = doctorServiceClient;
     }
 
+    /**
+     * Searches doctors by specialty by calling the doctor-service REST API.
+     * Doctor data is fetched from the database — not hardcoded.
+     */
     public List<DoctorSearchResponse> searchDoctorsBySpecialty(String specialty) {
-        if (specialty == null || specialty.isBlank()) {
-            return DOCTOR_DIRECTORY.entrySet().stream()
-                    .flatMap(entry -> entry.getValue().stream()
-                            .map(name -> DoctorSearchResponse.builder()
-                                    .doctorName(name)
-                                    .specialty(entry.getKey())
-                                    .build()))
-                    .sorted(Comparator.comparing(DoctorSearchResponse::getDoctorName))
-                    .toList();
-        }
-
-        String normalized = specialty.trim().toUpperCase();
-        return DOCTOR_DIRECTORY.entrySet().stream()
-                .filter(entry -> entry.getKey().contains(normalized))
-                .flatMap(entry -> entry.getValue().stream()
-                        .map(name -> DoctorSearchResponse.builder()
-                                .doctorName(name)
-                                .specialty(entry.getKey())
-                                .build()))
-                .sorted(Comparator.comparing(DoctorSearchResponse::getDoctorName))
+        List<DoctorSearchResponse> doctors = doctorServiceClient.searchDoctors(specialty);
+        return doctors.stream()
+                .sorted(Comparator.comparing(DoctorSearchResponse::getDoctorName,
+                        Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
                 .toList();
     }
+
 
     public AppointmentResponse createAppointment(CreateAppointmentRequest request) {
         if (appointmentRepository.existsByPatientIdAndSlotIdAndTypeAndStatusNot(

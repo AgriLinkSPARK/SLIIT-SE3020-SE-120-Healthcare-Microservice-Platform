@@ -10,6 +10,9 @@ spring:
 server:
   port: ${SERVER_PORT:8002}
 
+doctor-service:
+  url: ${DOCTOR_SERVICE_URL:http://localhost:8083}
+
 logging:
   level:
     root: INFO

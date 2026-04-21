@@ -47,11 +47,14 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+      doctor-service:
+        condition: service_started
     environment:
       SERVER_PORT: 8002
       SPRING_MONGODB_URI: mongodb://mongodb:27017/healthcare_appointments
       SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/healthcare_appointments
       SPRING_MONGODB_DATABASE: healthcare_appointments
+      DOCTOR_SERVICE_URL: http://healthcare-doctor-service:8083
       SPRING_MONGODB_URI_ATLAS: mongodb+srv://aenuine_db_user:1UGbqsYcQDXx1doi@cluster0.x7dnyc7.mongodb.net/?appName=Cluster0
     ports:
       - "8002:8002"
