@@ -106,6 +106,28 @@ services:
     ports:
       - "8083:8083"
 
+  patient-service:
+    build:
+      context: ./services/patient-service
+      dockerfile: Dockerfile
+    container_name: healthcare-patient-service
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+    environment:
+      SERVER_PORT: 8082
+      MONGODB_URI: mongodb+srv://ishiniayodya610_db_user:Ishini716@cluster0.czh0jfq.mongodb.net/healthcare_patient?appName=Cluster0
+      SPRING_DATA_MONGODB_URI: mongodb+srv://ishiniayodya610_db_user:Ishini716@cluster0.czh0jfq.mongodb.net/healthcare_patient?appName=Cluster0
+      SPRING_MONGODB_URI: mongodb+srv://ishiniayodya610_db_user:Ishini716@cluster0.czh0jfq.mongodb.net/healthcare_patient?appName=Cluster0
+      SPRING_MONGODB_DATABASE: healthcare_patient
+      JWT_SECRET: replace-with-a-strong-prod-secret
+      FILE_STORAGE_PATH: /app/uploads/medical-reports
+    volumes:
+      - patient_uploads:/app/uploads
+
   frontend:
     build:
       context: ./frontend
@@ -116,6 +138,7 @@ services:
         VITE_PAYMENT_SERVICE_URL: ${VITE_PAYMENT_SERVICE_URL:-http://localhost:8004}
         VITE_APPOINTMENT_SERVICE_URL: ${VITE_APPOINTMENT_SERVICE_URL:-http://localhost:8002/api/v1/appointments}
         VITE_TELEMEDICINE_SERVICE_URL: ${VITE_TELEMEDICINE_SERVICE_URL:-/api/telemedicine/sessions}
+        VITE_PATIENT_SERVICE_URL: ${VITE_PATIENT_SERVICE_URL:-http://localhost:8082}
         VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY}
     container_name: healthcare-frontend
     depends_on:
@@ -128,6 +151,8 @@ services:
       appointment-service:
         condition: service_started
       telemedicine-service:
+        condition: service_started
+      patient-service:
         condition: service_started
     ports:
       - "3000:80"
@@ -195,3 +220,4 @@ services:
 
 volumes:
   mongo_data:
+  patient_uploads:

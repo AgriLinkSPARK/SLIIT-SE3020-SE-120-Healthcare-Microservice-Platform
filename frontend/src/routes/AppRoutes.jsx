@@ -15,6 +15,8 @@ import BookAppointmentPage from '../pages/patient/BookAppointmentPage'
 import MyAppointments from '../pages/patient/MyAppointments'
 import PatientReportsPage from '../pages/patient/ReportsPage'
 import PaymentsPage from '../pages/patient/PaymentsPage'
+import PatientProfile from '../pages/patient/PatientProfile'
+import PatientPrescriptionsPage from '../pages/patient/PrescriptionsPage'
 import VideoConsultationPage from '../pages/telemedicine/VideoConsultationPage'
 import AdminDashboard from '../pages/admin/AdminDashboard'
 import ManageUsersPage from '../pages/admin/ManageUsersPage'
@@ -59,6 +61,8 @@ export default function AppRoutes() {
       <Route path="/patient/appointments" element={<ProtectedRoute allowedRoles={[USER_ROLES.PATIENT]}><MyAppointments /></ProtectedRoute>} />
       <Route path="/patient/payments" element={<ProtectedRoute allowedRoles={[USER_ROLES.PATIENT]}><PaymentsPage /></ProtectedRoute>} />
       <Route path="/patient/reports" element={<ProtectedRoute allowedRoles={[USER_ROLES.PATIENT]}><PatientReportsPage /></ProtectedRoute>} />
+      <Route path="/patient/profile" element={<ProtectedRoute allowedRoles={[USER_ROLES.PATIENT]}><PatientProfile /></ProtectedRoute>} />
+      <Route path="/patient/prescriptions" element={<ProtectedRoute allowedRoles={[USER_ROLES.PATIENT]}><PatientPrescriptionsPage /></ProtectedRoute>} />
 
       <Route
         path="/telemedicine/sessions/:sessionId"

@@ -1,3 +1,2 @@
-export default function BrowseDoctorsPage() {
-  return <div className="p-6 text-lg font-semibold">Browse Doctors</div>
-}
+// Re-export from the component for the routing layer
+export { default } from '../../components/patient-NTBA/BrowseDoctorsPage'
