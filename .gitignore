@@ -5,7 +5,6 @@
 Thumbs.db
 
 .idea/
-.vscode/
 *.iml
 *.ipr
 *.iws
@@ -27,8 +26,6 @@ replay_pid*
 # =========================
 # Environment / Secrets
 # =========================
-.env
-.env.*
 !.env.example
 !.env.*.example
 
@@ -110,3 +107,4 @@ test-output/
 *.swp
 *.swo
 *~
+config.bat
