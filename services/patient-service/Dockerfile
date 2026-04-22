@@ -1,16 +1,13 @@
-FROM maven:3.9.11-eclipse-temurin-17 AS builder
+# Stage 1: Build
+FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /app
-
 COPY pom.xml .
 COPY src ./src
+RUN mvn clean package -DskipTests
 
-RUN mvn -q clean package -DskipTests
-
-FROM eclipse-temurin:17-jre
+# Stage 2: Run
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-
 COPY --from=builder /app/target/patient-service-0.0.1-SNAPSHOT.jar app.jar
-
-EXPOSE 8080
-
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+EXPOSE 8082
+ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -75,17 +75,42 @@ services:
         condition: service_healthy
     environment:
       SERVER_PORT: 8081
-      MONGODB_URI: mongodb+srv://chamithu_db_user:wVyYgnFqzCAK6WZO@cluster0.pygjnpf.mongodb.net/auth_service?appName=Cluster0
-      SPRING_DATA_MONGODB_URI: mongodb+srv://chamithu_db_user:wVyYgnFqzCAK6WZO@cluster0.pygjnpf.mongodb.net/auth_service?appName=Cluster0
-      SPRING_MONGODB_URI: mongodb+srv://chamithu_db_user:wVyYgnFqzCAK6WZO@cluster0.pygjnpf.mongodb.net/auth_service?appName=Cluster0
+      MONGODB_URI: mongodb://mongodb:27017/auth_service
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/auth_service
+      SPRING_MONGODB_URI: mongodb://mongodb:27017/auth_service
       JWT_SECRET: replace-with-a-strong-prod-secret
       JWT_EXPIRATION_MINUTES: 120
       AUTH_SEED_ADMIN_ENABLED: "true"
       AUTH_ADMIN_FULL_NAME: Platform Administrator
       AUTH_ADMIN_EMAIL: admin@healthcare.local
       AUTH_ADMIN_PASSWORD: Admin@123456
+      PATIENT_SERVICE_URL: http://healthcare-patient-service:8082
+      
     ports:
       - "8081:8081"
+
+  patient-service:
+    build:
+      context: ./services/patient-service
+      dockerfile: Dockerfile
+    container_name: healthcare-patient-service
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+    environment:
+      SERVER_PORT: 8082
+      MONGODB_URI: mongodb://mongodb:27017/healthcare_patient
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/healthcare_patient
+      SPRING_MONGODB_URI: mongodb://mongodb:27017/healthcare_patient
+      SPRING_MONGODB_DATABASE: healthcare_patient
+      JWT_SECRET: replace-with-a-strong-prod-secret
+      FILE_STORAGE_PATH: /app/uploads/medical-reports
+      APP_SECURITY_ENABLED: "false"
+    volumes:
+      - patient_uploads:/app/uploads
 
   doctor-service:
     build:
@@ -116,6 +141,7 @@ services:
         VITE_PAYMENT_SERVICE_URL: ${VITE_PAYMENT_SERVICE_URL:-http://localhost:8004}
         VITE_APPOINTMENT_SERVICE_URL: ${VITE_APPOINTMENT_SERVICE_URL:-http://localhost:8002/api/v1/appointments}
         VITE_TELEMEDICINE_SERVICE_URL: ${VITE_TELEMEDICINE_SERVICE_URL:-/api/telemedicine/sessions}
+        VITE_PATIENT_SERVICE_URL: ${VITE_PATIENT_SERVICE_URL:-http://localhost:8082}
         VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY}
     container_name: healthcare-frontend
     depends_on:
@@ -195,3 +221,6 @@ services:
 
 volumes:
   mongo_data:
+  patient_uploads:
+
+

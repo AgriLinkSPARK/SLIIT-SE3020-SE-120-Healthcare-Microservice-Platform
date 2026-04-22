@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Video, Calendar, Clock, RefreshCw, Loader2, MapPin, X, ChevronRight, CheckCircle } from 'lucide-react'
+import PatientPageLayout from '../../components/patient/PatientPageLayout'
 import useAuth from '../../hooks/useAuth'
 import { cancelAppointment, getAppointmentsByPatient } from '../../services/appointmentService'
 import { getVideoSessionByAppointmentId } from '../../services/telemedicineService'
@@ -113,100 +115,204 @@ export default function MyAppointments() {
     }
   }
 
+const getStatusIcon = (status) => {
+  switch (status) {
+    case 'BOOKED':
+      return <Calendar className="h-4 w-4 text-blue-600" />
+    case 'CONFIRMED':
+      return <CheckCircle className="h-4 w-4 text-violet-600" />
+    case 'IN_PROGRESS':
+      return <Clock className="h-4 w-4 text-amber-600" />
+    case 'COMPLETED':
+      return <CheckCircle className="h-4 w-4 text-emerald-600" />
+    case 'CANCELLED':
+      return <X className="h-4 w-4 text-rose-600" />
+    default:
+      return null
+  }
+}
+
   if (!patientId) {
     return (
-      <div className="p-6">
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
-          Patient session not found. Please log in again to see appointments.
+      <PatientPageLayout title="My Appointments" subtitle="View your appointment history">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
+            <Calendar className="h-5 w-5 text-amber-600" />
+          </div>
+          <p className="text-amber-900 font-medium">Patient session not found. Please log in again to see appointments.</p>
         </div>
-      </div>
+      </PatientPageLayout>
     )
   }
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">My Appointments</h1>
-        <button
-          type="button"
-          onClick={loadAppointments}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-        >
-          Refresh
-        </button>
+    <PatientPageLayout 
+      title="My Appointments" 
+      subtitle="View and manage all your healthcare appointments"
+    >
+      <div className="space-y-6">
+        {/* Toolbar */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <p className="text-sm text-slate-600">
+            Showing {appointments.length} {appointments.length === 1 ? 'appointment' : 'appointments'}. 
+            Auto-refreshes every 15 seconds.
+          </p>
+          <button
+            type="button"
+            onClick={loadAppointments}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
+
+        {/* Messages */}
+        {errorMessage && (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 flex items-center gap-2">
+            <div className="h-5 w-5 rounded-full bg-rose-200 flex items-center justify-center text-rose-700 font-bold text-xs">!</div>
+            {errorMessage}
+          </div>
+        )}
+
+        {roomMessage && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-center gap-2">
+            <Clock className="h-5 w-5 text-amber-600" />
+            {roomMessage}
+          </div>
+        )}
+
+        {/* Appointments Grid */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+            <span className="ml-3 text-slate-600">Loading appointments...</span>
+          </div>
+        ) : appointments.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+            <div className="mx-auto h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+              <Calendar className="h-8 w-8 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-medium text-slate-900 mb-2">No appointments yet</h3>
+            <p className="text-sm text-slate-500 mb-4 max-w-sm mx-auto">
+              You haven't booked any appointments yet. Start by booking your first consultation.
+            </p>
+            <button
+              onClick={() => navigate('/patient/book')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              Book Appointment
+            </button>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {appointments.map((appointment) => {
+              const canCancel = appointment.status !== 'CANCELLED' && appointment.status !== 'COMPLETED'
+              const isOnline = appointment.type === 'ONLINE_VIDEO'
+              const canJoin = isOnline && appointment.status !== 'CANCELLED' && appointment.status !== 'COMPLETED'
+
+              return (
+                <div 
+                  key={appointment.id} 
+                  className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  {/* Card Header */}
+                  <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                        isOnline ? 'bg-blue-100' : 'bg-emerald-100'
+                      }`}>
+                        {isOnline ? (
+                          <Video className={`h-5 w-5 ${isOnline ? 'text-blue-600' : 'text-emerald-600'}`} />
+                        ) : (
+                          <MapPin className="h-5 w-5 text-emerald-600" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-900">{appointment.doctorName}</h3>
+                        <p className="text-sm text-slate-500">{appointment.specialty || 'General Consultation'}</p>
+                      </div>
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+                        statusStyles[appointment.status] || 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      {appointment.status}
+                    </span>
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="px-6 py-4">
+                    <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <Calendar className="h-4 w-4 text-slate-400" />
+                        <span>{new Date(appointment.appointmentDateTime).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <Clock className="h-4 w-4 text-slate-400" />
+                        <span>{new Date(appointment.appointmentDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <span className="text-slate-400">Type:</span>
+                        <span className={isOnline ? 'text-blue-600 font-medium' : 'text-emerald-600 font-medium'}>
+                          {isOnline ? 'Online Video' : 'Physical Visit'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <span className="text-slate-400">Fee:</span>
+                        <span className="font-medium text-slate-900">${appointment.fee}</span>
+                      </div>
+                    </div>
+
+                    {appointment.notes && (
+                      <p className="mt-4 text-sm text-slate-600 bg-slate-50 rounded-lg p-3">
+                        {appointment.notes}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Card Footer */}
+                  <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex flex-wrap gap-3">
+                    {canJoin && (
+                      <button
+                        type="button"
+                        onClick={() => handleJoinConsultation(appointment)}
+                        disabled={joiningAppointmentId === appointment.id}
+                        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {joiningAppointmentId === appointment.id ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Preparing...
+                          </>
+                        ) : (
+                          <>
+                            <Video className="h-4 w-4" />
+                            Join Consultation
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {canCancel && (
+                      <button
+                        type="button"
+                        onClick={() => handleCancel(appointment.id)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-rose-300 px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                        Cancel Appointment
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
-
-      <p className="text-sm text-slate-600">Showing only your booked appointments. Status updates are refreshed every 15 seconds.</p>
-
-      {errorMessage && (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {errorMessage}
-        </div>
-      )}
-
-      {roomMessage && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          {roomMessage}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600">Loading appointments...</div>
-      ) : appointments.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600">No appointments found.</div>
-      ) : (
-        <div className="grid gap-3">
-          {appointments.map((appointment) => {
-            const canCancel = appointment.status !== 'CANCELLED' && appointment.status !== 'COMPLETED'
-            return (
-              <div key={appointment.id} className="rounded-xl border border-slate-200 bg-white p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-lg font-semibold text-slate-800">{appointment.doctorName}</h2>
-                  <span
-                    className={`rounded-full border px-2 py-1 text-xs font-semibold ${statusStyles[appointment.status] || 'bg-slate-100 text-slate-700 border-slate-200'}`}
-                  >
-                    {appointment.status}
-                  </span>
-                </div>
-
-                <div className="mt-3 grid gap-2 text-sm text-slate-700 md:grid-cols-2">
-                  <div><strong>Patient:</strong> {appointment.patientId}</div>
-                  <div><strong>Doctor:</strong> {appointment.doctorName}</div>
-                  <div><strong>Specialty:</strong> {appointment.specialty}</div>
-                  <div><strong>Type:</strong> {appointment.type === 'ONLINE_VIDEO' ? 'Online Video' : 'Physical Visit'}</div>
-                  <div><strong>Date & Time:</strong> {new Date(appointment.appointmentDateTime).toLocaleString()}</div>
-                  <div><strong>Fee:</strong> ${appointment.fee}</div>
-                </div>
-
-                {appointment.type === 'ONLINE_VIDEO' && appointment.status !== 'CANCELLED' && appointment.status !== 'COMPLETED' && (
-                  <button
-                    type="button"
-                    onClick={() => handleJoinConsultation(appointment)}
-                    disabled={joiningAppointmentId === appointment.id}
-                    className="mt-3 mr-3 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    {joiningAppointmentId === appointment.id ? 'Preparing room...' : 'Join Consultation'}
-                  </button>
-                )}
-
-                {appointment.notes && (
-                  <p className="mt-2 text-sm text-slate-600">{appointment.notes}</p>
-                )}
-
-                {canCancel && (
-                  <button
-                    type="button"
-                    onClick={() => handleCancel(appointment.id)}
-                    className="mt-3 rounded-lg border border-rose-300 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50"
-                  >
-                    Cancel Appointment
-                  </button>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
+    </PatientPageLayout>
   )
 }

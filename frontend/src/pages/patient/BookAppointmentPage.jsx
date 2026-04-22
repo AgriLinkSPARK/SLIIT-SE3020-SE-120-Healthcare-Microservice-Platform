@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Calendar, Search, Clock, MapPin, Video, Loader2, Stethoscope, ChevronRight, AlertCircle } from 'lucide-react'
+import PatientPageLayout from '../../components/patient/PatientPageLayout'
 import useAuth from '../../hooks/useAuth'
 import { bookAppointment } from '../../services/appointmentService'
 import { getDoctorBookingOptions, getDoctorCategories } from '../../services/doctorService'
@@ -328,161 +330,301 @@ export default function BookAppointmentPage() {
     }
   }
 
+  const getAppointmentTypeIcon = () => {
+    return type === 'ONLINE_VIDEO' ? Video : MapPin
+  }
+
+  const AppointmentTypeIcon = getAppointmentTypeIcon()
+
   return (
-    <div className="p-6">
-      <div className="mb-5">
-        <h1 className="text-2xl font-semibold">Book Doctor Appointment</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Filter by category, doctor name, and date to find matching schedules, then choose one to book.
-        </p>
-      </div>
-
-      <div className="grid gap-4 rounded-xl border border-slate-200 bg-white p-5 md:grid-cols-2">
-        <label className="space-y-1 md:col-span-1">
-          <span className="text-sm font-medium text-slate-700">Appointment Type</span>
-          <select
-            value={type}
-            onChange={(event) => setType(event.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          >
-            {APPOINTMENT_TYPES.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="space-y-1 md:col-span-1">
-          <span className="text-sm font-medium text-slate-700">Search Doctor by Name</span>
-          <input
-            type="text"
-            value={doctorNameQuery}
-            onChange={(event) => {
-              setDoctorNameQuery(event.target.value)
-              setSelectedSlotId('')
-            }}
-            placeholder="e.g. Dr. Amara Fernando"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          />
-        </label>
-
-        <label className="space-y-1 md:col-span-1">
-          <span className="text-sm font-medium text-slate-700">Schedule Date</span>
-          <input
-            type="date"
-            value={scheduleDate}
-            onChange={(event) => {
-              setScheduleDate(event.target.value)
-              setSelectedSlotId('')
-            }}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          />
-          <p className="text-xs text-slate-500">Optional. Shows doctors available on this day.</p>
-        </label>
-
-        <label className="space-y-1 md:col-span-1">
-          <span className="text-sm font-medium text-slate-700">Doctor Category</span>
-          <select
-            value={selectedCategoryId}
-            onChange={(event) => {
-              setSelectedCategoryId(event.target.value)
-              setSelectedSlotId('')
-            }}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          >
-            <option value="">Select category</option>
-            {doctorCategories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-          {selectedCategory && (
-            <p className="text-xs text-slate-600">{selectedCategory.description}</p>
-          )}
-          {!selectedCategory && (
-            <p className="text-xs text-slate-500">Optional when searching by doctor name.</p>
-          )}
-        </label>
-
-        <div className="md:col-span-2">
-          <button
-            type="button"
-            onClick={handleSearchSchedules}
-            disabled={optionsLoading}
-            className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            Search Schedules
-          </button>
-        </div>
-
-        <div className="space-y-1 md:col-span-2">
-          <span className="text-sm font-medium text-slate-700">Available Schedules</span>
-          {!selectedCategory && (
-            <p className="text-xs text-slate-500">Select a doctor category to load matching schedules.</p>
-          )}
-          <div className="grid gap-3">
-            {visibleSchedules.map((slot) => {
-              const isSelected = slot.slotId === selectedSlotId
-              return (
-                <div
-                  key={slot.slotId}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setSelectedSlotId(slot.slotId)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      setSelectedSlotId(slot.slotId)
-                    }
-                  }}
-                  className={`w-full rounded-lg border px-4 py-3 text-left transition ${
-                    isSelected
-                      ? 'cursor-pointer border-brand-500 bg-brand-50 ring-1 ring-brand-200'
-                      : 'cursor-pointer border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-                  }`}
-                >
-                  <p className="text-sm font-semibold text-slate-800">{slot.doctorName}</p>
-                  <p className="text-xs text-slate-600">{slot.specialization || 'General Consultation'}</p>
-                  <p className="mt-1 text-sm text-slate-700">{new Date(slot.startTime).toLocaleString()}</p>
-                  <p className="text-xs text-slate-600">{slot.locationType} | Fee: ${Number(slot.consultationFee || 0).toFixed(2)}</p>
-                  <p className="text-xs text-slate-600">
-                    Online: {slot.onlineCapacity || 0} slots | Physical: {slot.physicalCapacity || 0} slots
-                  </p>
-                </div>
-              )
-            })}
-          </div>
-          {(selectedCategory || normalizedDoctorNameQuery || scheduleDate) && visibleSchedules.length === 0 && (
-            <p className="text-xs text-amber-700">No available schedules found for the current filters.</p>
-          )}
-        </div>
-
-        {selectedSchedule && (
-          <div className="md:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-semibold text-slate-800">Selected Schedule Information</p>
-            <p className="mt-1 text-sm text-slate-600">
-              {`${selectedSchedule.doctorName} • ${new Date(selectedSchedule.startTime).toLocaleString()} • ${selectedSchedule.locationType}`}
-            </p>
-            <button
-              type="button"
-              onClick={() => handleBookAppointment(selectedSchedule)}
-              disabled={loading}
-              className="mt-3 inline-flex items-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {loading ? 'Booking...' : 'Proceed to Payment'}
-            </button>
-          </div>
-        )}
-
+    <PatientPageLayout 
+      title="Book Doctor Appointment" 
+      subtitle="Find and book appointments with our qualified healthcare professionals"
+    >
+      <div className="space-y-6">
+        {/* Error Message */}
         {errorMessage && (
-          <div className="md:col-span-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 flex-shrink-0" />
             {errorMessage}
           </div>
         )}
 
+        {/* Main Form Card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-blue-50 to-white">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Find Available Slots</h2>
+                <p className="text-sm text-slate-500">Filter by category, doctor, and date</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <div className="grid gap-5 md:grid-cols-2">
+              {/* Appointment Type */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <AppointmentTypeIcon className="h-4 w-4 text-slate-400" />
+                  Appointment Type
+                </label>
+                <div className="flex rounded-xl border border-slate-200 p-1 bg-slate-50">
+                  {APPOINTMENT_TYPES.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setType(option.value)}
+                      className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                        type === option.value
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Doctor Category */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <Stethoscope className="h-4 w-4 text-slate-400" />
+                  Doctor Category
+                </label>
+                <select
+                  value={selectedCategoryId}
+                  onChange={(event) => {
+                    setSelectedCategoryId(event.target.value)
+                    setSelectedSlotId('')
+                  }}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all bg-white"
+                >
+                  <option value="">Select a category</option>
+                  {doctorCategories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                {selectedCategory && (
+                  <p className="text-xs text-slate-500">{selectedCategory.description}</p>
+                )}
+              </div>
+
+              {/* Search Doctor */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <Search className="h-4 w-4 text-slate-400" />
+                  Search Doctor by Name
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={doctorNameQuery}
+                    onChange={(event) => {
+                      setDoctorNameQuery(event.target.value)
+                      setSelectedSlotId('')
+                    }}
+                    placeholder="e.g. Dr. Amara Fernando"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Schedule Date */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-slate-400" />
+                  Schedule Date (Optional)
+                </label>
+                <input
+                  type="date"
+                  value={scheduleDate}
+                  onChange={(event) => {
+                    setScheduleDate(event.target.value)
+                    setSelectedSlotId('')
+                  }}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Search Button */}
+            <button
+              type="button"
+              onClick={handleSearchSchedules}
+              disabled={optionsLoading || (!selectedCategory && !doctorNameQuery.trim())}
+              className="mt-6 w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {optionsLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Searching...
+                </>
+              ) : (
+                <>
+                  <Search className="h-4 w-4" />
+                  Search Schedules
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Available Schedules */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-6 py-5 border-b border-slate-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Available Schedules</h2>
+                  <p className="text-sm text-slate-500">
+                    {visibleSchedules.length} {visibleSchedules.length === 1 ? 'slot' : 'slots'} available
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {!selectedCategory && !doctorNameQuery.trim() ? (
+              <div className="text-center py-12">
+                <div className="mx-auto h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                  <Calendar className="h-8 w-8 text-slate-400" />
+                </div>
+                <h3 className="text-base font-medium text-slate-900 mb-1">Select filters to see schedules</h3>
+                <p className="text-sm text-slate-500 max-w-sm mx-auto">
+                  Choose a doctor category or search by name to find available appointment slots
+                </p>
+              </div>
+            ) : visibleSchedules.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="mx-auto h-16 w-16 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+                  <AlertCircle className="h-8 w-8 text-amber-600" />
+                </div>
+                <h3 className="text-base font-medium text-slate-900 mb-1">No schedules found</h3>
+                <p className="text-sm text-slate-500 max-w-sm mx-auto">
+                  No available schedules match your current filters. Try adjusting your search criteria.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {visibleSchedules.map((slot) => {
+                  const isSelected = slot.slotId === selectedSlotId
+                  return (
+                    <div
+                      key={slot.slotId}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setSelectedSlotId(slot.slotId)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          setSelectedSlotId(slot.slotId)
+                        }
+                      }}
+                      className={`w-full rounded-xl border p-4 text-left transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-200'
+                          : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-semibold text-slate-900">{slot.doctorName}</p>
+                          <p className="text-sm text-slate-500">{slot.specialization || 'General Consultation'}</p>
+                        </div>
+                        <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
+                          ${Number(slot.consultationFee || 0).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1.5 text-slate-600">
+                          <Clock className="h-4 w-4 text-slate-400" />
+                          {new Date(slot.startTime).toLocaleString()}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-slate-600">
+                          <MapPin className="h-4 w-4 text-slate-400" />
+                          {slot.locationType}
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
+                        <span className="flex items-center gap-1">
+                          <Video className="h-3 w-3" />
+                          Online: {slot.onlineCapacity || 0} slots
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          Physical: {slot.physicalCapacity || 0} slots
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Selected Schedule & Book Button */}
+        {selectedSchedule && (
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg shadow-blue-200 overflow-hidden">
+            <div className="p-6 text-white">
+              <h3 className="text-lg font-semibold mb-1">Selected Appointment</h3>
+              <p className="text-blue-100 text-sm mb-4">Review your selection and proceed to payment</p>
+              
+              <div className="bg-white/10 rounded-xl p-4 mb-6 backdrop-blur-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-semibold">{selectedSchedule.doctorName}</p>
+                    <p className="text-sm text-blue-100">{selectedSchedule.specialization || 'General Consultation'}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-4 text-sm">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        {new Date(selectedSchedule.startTime).toLocaleString()}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        {selectedSchedule.locationType}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="px-4 py-2 rounded-full bg-white text-blue-600 font-bold">
+                    ${Number(selectedSchedule.consultationFee || 0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleBookAppointment(selectedSchedule)}
+                disabled={loading}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-blue-600 hover:bg-blue-50 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Booking...
+                  </>
+                ) : (
+                  <>
+                    Proceed to Payment
+                    <ChevronRight className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+    </PatientPageLayout>
   )
 }
