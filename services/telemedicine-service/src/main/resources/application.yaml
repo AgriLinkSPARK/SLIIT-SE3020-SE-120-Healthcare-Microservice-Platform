@@ -3,7 +3,9 @@ spring:
     name: telemedicine-service
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb+srv://chamithu_db_user:MWGH4Z9kvM0hiGcW@cluster0.y7jccfj.mongodb.net/telemedicine?appName=Cluster0}
+      uri: ${MONGODB_URI:mongodb://mongodb:27017/healthcare_telemedicine}
+      database: ${SPRING_MONGODB_DATABASE:healthcare_telemedicine}
+      auto-index-creation: true
 
 server:
   port: ${SERVER_PORT:8085}

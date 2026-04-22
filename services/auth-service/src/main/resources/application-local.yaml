@@ -1,7 +1,9 @@
 spring:
   data:
     mongodb:
-      uri: mongodb://mongodb:27017/healthcare_auth
+      uri: mongodb://mongodb:27017/auth_service
+      database: auth_service
+      auto-index-creation: true
 
 server:
   port: ${SERVER_PORT:8081}

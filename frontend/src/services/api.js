@@ -1,9 +1,8 @@
 import axios from 'axios'
-import { API_BASE_URL } from '../utils/constants'
 import { getToken } from '../utils/tokenUtils'
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: '/api',
 })
 
 api.interceptors.request.use((config) => {

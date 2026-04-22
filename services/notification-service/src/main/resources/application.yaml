@@ -1,3 +1,11 @@
 spring:
   application:
     name: notification-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://mongodb:27017/healthcare_notifications}
+      database: ${SPRING_MONGODB_DATABASE:healthcare_notifications}
+      auto-index-creation: true
+
+server:
+  port: ${SERVER_PORT:8080}

@@ -3,7 +3,9 @@ spring:
     name: auth-service
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb+srv://chamithu_db_user:wVyYgnFqzCAK6WZO@cluster0.pygjnpf.mongodb.net/auth_service?appName=Cluster0}
+      uri: ${MONGODB_URI:mongodb://mongodb:27017/auth_service}
+      database: ${SPRING_MONGODB_DATABASE:auth_service}
+      auto-index-creation: true
 
 server:
   port: ${SERVER_PORT:8081}

@@ -1,3 +1,11 @@
 spring:
   application:
     name: patient-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://mongodb:27017/healthcare_patients}
+      database: ${SPRING_MONGODB_DATABASE:healthcare_patients}
+      auto-index-creation: true
+
+server:
+  port: ${SERVER_PORT:8080}

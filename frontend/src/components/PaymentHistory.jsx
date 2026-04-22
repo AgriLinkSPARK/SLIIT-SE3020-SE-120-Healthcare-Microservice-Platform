@@ -5,7 +5,6 @@ import './PaymentHistory.css';
 import useAuth from '../hooks/useAuth';
 import { USER_ROLES } from '../utils/constants';
 
-const paymentServiceBaseUrl = import.meta.env.VITE_PAYMENT_SERVICE_URL || 'http://localhost:8004';
 
 const resolveIdentity = (user, keys) => {
   const candidates = [
@@ -47,7 +46,7 @@ const PaymentHistory = ({ patientId, status = null, showAll = false, role: roleO
       const isAdmin = role === USER_ROLES.ADMIN;
       const isDoctor = role === USER_ROLES.DOCTOR;
       const isPatient = role === USER_ROLES.PATIENT || (!isAdmin && !isDoctor);
-      let url = `${paymentServiceBaseUrl}/api/v1/payments`;
+      let url = '/api/payments';
 
       if (isPatient) {
         if (!resolvedPatientId) {
@@ -58,8 +57,8 @@ const PaymentHistory = ({ patientId, status = null, showAll = false, role: roleO
         }
 
         url = effectiveStatus
-          ? `${paymentServiceBaseUrl}/api/v1/payments/history/${resolvedPatientId}?status=${effectiveStatus}`
-          : `${paymentServiceBaseUrl}/api/v1/payments/patient/${resolvedPatientId}`;
+          ? `/api/payments/history/${resolvedPatientId}?status=${effectiveStatus}`
+          : `/api/payments/patient/${resolvedPatientId}`;
       } else if (isDoctor) {
         if (!resolvedDoctorId) {
           setPayments([]);
@@ -69,12 +68,12 @@ const PaymentHistory = ({ patientId, status = null, showAll = false, role: roleO
         }
 
         url = effectiveStatus
-          ? `${paymentServiceBaseUrl}/api/v1/payments/doctor/${resolvedDoctorId}?status=${effectiveStatus}`
-          : `${paymentServiceBaseUrl}/api/v1/payments/doctor/${resolvedDoctorId}`;
+          ? `/api/payments/doctor/${resolvedDoctorId}?status=${effectiveStatus}`
+          : `/api/payments/doctor/${resolvedDoctorId}`;
       } else if (effectiveStatus || showAll) {
         url = effectiveStatus
-          ? `${paymentServiceBaseUrl}/api/v1/payments?status=${effectiveStatus}`
-          : `${paymentServiceBaseUrl}/api/v1/payments`;
+          ? `/api/payments?status=${effectiveStatus}`
+          : '/api/payments';
       }
 
       const response = await axios.get(url);
@@ -168,7 +167,7 @@ const PaymentHistory = ({ patientId, status = null, showAll = false, role: roleO
 
     try {
       const response = await axios.post(
-        `${paymentServiceBaseUrl}/api/v1/payments/${paymentId}/refund`,
+        `/api/payments/${paymentId}/refund`,
         {
           reason: 'requested_by_customer',
           notes: reason,

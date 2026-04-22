@@ -4,6 +4,8 @@ spring:
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://mongodb:27017/healthcare_doctor}
+      database: ${SPRING_MONGODB_DATABASE:healthcare_doctor}
+      auto-index-creation: true
 
 server:
   port: ${SERVER_PORT:8083}

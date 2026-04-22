@@ -15,9 +15,8 @@ if (typeof loadStripe.setLoadParameters === 'function') {
 }
 
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || import.meta.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
-const paymentServiceBaseUrl = import.meta.env.VITE_PAYMENT_SERVICE_URL || 'http://localhost:8004';
 const paymentApi = axios.create({
-  baseURL: paymentServiceBaseUrl,
+  baseURL: '/api/payments',
   timeout: 15000,
 });
 const isPlaceholderStripeKey = !stripePublishableKey
